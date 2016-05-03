@@ -6,6 +6,8 @@ Con.text = [];
 
 Con.ToggleConsole_f = function()
 {
+	document.exitPointerLock()
+	Host.WriteConfiguration();
 	SCR.EndLoadingPlaque();
 	if (Key.dest.value === Key.dest.console)
 	{

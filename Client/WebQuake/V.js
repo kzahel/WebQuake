@@ -426,4 +426,5 @@ V.Init = function()
 	V.kickroll = Cvar.RegisterVariable('v_kickroll', '0.6');
 	V.kickpitch = Cvar.RegisterVariable('v_kickpitch', '0.6');
 	V.gamma = Cvar.RegisterVariable('gamma', '1', true);
+	V.vid_fullscreen = Cvar.RegisterVariable('vid_fullscreen', '0');
 };

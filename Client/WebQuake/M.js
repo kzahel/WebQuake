@@ -78,18 +78,20 @@ M.DrawTextBox = function(x, y, width, lines)
 
 M.ToggleMenu_f = function()
 {
+	Host.WriteConfiguration();
 	M.entersound = true;
 	if (Key.dest.value === Key.dest.menu)
 	{
-		if (M.state.value !== M.state.main)
+	    if (M.state.value !== M.state.main)
 		{
-			M.Menu_Main_f();
+		    M.Menu_Main_f();
 			return;
 		}
 		Key.dest.value = Key.dest.game;
 		M.state.value = M.state.none;
 		return;
 	}
+	document.exitPointerLock()
 	M.Menu_Main_f();
 };
 
@@ -537,7 +539,7 @@ M.MultiPlayer_Key = function(k)
 
 // Options menu
 M.options_cursor = 0;
-M.options_items = 11;
+M.options_items = 13;
 
 M.Menu_Options_f = function()
 {
@@ -610,6 +612,20 @@ M.AdjustSliders = function(dir)
 		return;
 	case 11: // lookstrafe
 		Cvar.SetValue('lookstrafe', (CL.lookstrafe.value !== 0) ? 0 : 1);
+		return;
+	case 12: // fullscreen
+            if (V.vid_fullscreen.value !== 0 || ! document.fullscreenElement) {
+                VID.mainwindow.webkitRequestFullScreen()
+                V.vid_fullscreen.value = 1
+                // exit the menu...
+                M.ToggleMenu_f()
+                M.ToggleMenu_f()
+            } else {
+                document.webkitExitFullscreen()
+                V.vid_fullscreen.value = 0
+            }
+	    Cvar.SetValue('vid_fullscreen',V.vid_fullscreen.value);
+            return
 	}
 };
 
@@ -661,6 +677,8 @@ M.Options_Draw = function()
 	M.Print(220, 112, (CL.lookspring.value !== 0) ? 'on' : 'off');
 	M.Print(112, 120, 'Lookstrafe');
 	M.Print(220, 120, (CL.lookstrafe.value !== 0) ? 'on' : 'off');
+	M.Print(112, 128, 'Fullscreen');
+	M.Print(220, 128, (V.vid_fullscreen.value !== 0) ? 'on' : 'off');
 	
 	M.DrawCharacter(200, 32 + (M.options_cursor << 3), 12 + ((Host.realtime * 4.0) & 1));
 };

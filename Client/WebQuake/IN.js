@@ -4,14 +4,13 @@ IN.mouse_x = 0.0;
 IN.mouse_y = 0.0;
 IN.old_mouse_x = 0.0;
 IN.old_mouse_y = 0.0;
-
 IN.StartupMouse = function()
 {
-	IN.m_filter = Cvar.RegisterVariable('m_filter', '1');
+        IN.m_filter = Cvar.RegisterVariable('m_filter', '1');
 	if (COM.CheckParm('-nomouse') != null)
 		return;
-	if (VID.mainwindow.pointerLockElement != null)
-	{
+	if (VID.mainwindow.pointerLockElement != null || VID.mainwindow.requestPointerLock)
+    {
 		IN.movementX = 'movementX';
 		IN.movementY = 'movementY';
 		IN.pointerLockElement = 'pointerLockElement';
@@ -127,11 +126,10 @@ IN.onmousemove = function(e)
 	IN.mouse_x += e[IN.movementX];
 	IN.mouse_y += e[IN.movementY];
 };
-
 IN.onpointerlockchange = function()
 {
 	if (document[IN.pointerLockElement] === VID.mainwindow)
 		return;
-	Key.Event(Key.k.escape, true);
-	Key.Event(Key.k.escape);
+	//Key.Event(Key.k.escape, true);
+	//Key.Event(Key.k.escape);
 };
