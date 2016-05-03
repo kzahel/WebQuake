@@ -349,6 +349,18 @@ CL.AdjustAngles = function()
 
 	var angles = CL.state.viewangles;
 
+    if (Key.gamepadlastaxes) {
+	// joystick/gamepad movement
+	//console.log(Key.gamepadlastaxes)
+	// TODO make customizable?
+
+        
+	angles[1] += speed * CL.yawspeed.value * Key.gamepadlastaxes[CL.joyswap.value?0:2] * -1;
+	angles[1] = Vec.Anglemod(angles[1]);
+	V.StopPitchDrift();
+	angles[0] += speed * CL.pitchspeed.value * Key.gamepadlastaxes[CL.joyswap.value?1:3]
+    }
+
 	if ((CL.kbuttons[CL.kbutton.strafe].state & 1) === 0)
 	{
 		angles[1] += speed * CL.yawspeed.value * (CL.KeyState(CL.kbutton.left) - CL.KeyState(CL.kbutton.right));
@@ -388,6 +400,13 @@ CL.BaseMove = function()
 	var cmd = CL.state.cmd;
 
 	cmd.sidemove = CL.sidespeed.value * (CL.KeyState(CL.kbutton.moveright) - CL.KeyState(CL.kbutton.moveleft));
+
+    if (Key.gamepadlastaxes && Key.gamepadlastaxes[CL.joyswap.value?2:0]) {
+	cmd.sidemove += CL.sidespeed.value * CL.m_side.value * Key.gamepadlastaxes[CL.joyswap.value?2:0];
+	//console.log('sidemove',cmd.sidemove);
+	//cmd.sidemove = CL.sidespeed.value * Key.gamepadlastaxes[2];
+    }
+
 	if ((CL.kbuttons[CL.kbutton.strafe].state & 1) !== 0)
 		cmd.sidemove += CL.sidespeed.value * (CL.KeyState(CL.kbutton.right) - CL.KeyState(CL.kbutton.left));
 
@@ -397,6 +416,12 @@ CL.BaseMove = function()
 		cmd.forwardmove = CL.forwardspeed.value * CL.KeyState(CL.kbutton.forward) - CL.backspeed.value * CL.KeyState(CL.kbutton.back);
 	else
 		cmd.forwardmove = 0.0;
+
+    if (Key.gamepadlastaxes && Key.gamepadlastaxes[CL.joyswap.value?3:1]) {
+	cmd.forwardmove += CL.forwardspeed.value * CL.m_forward.value * Key.gamepadlastaxes[CL.joyswap.value?3:1] * -1;
+	//console.log('forwardmove',cmd.forwardmove);
+	//cmd.forwardmove = CL.forwardspeed.value * Key.gamepadlastaxes[3] * -1;
+    }
 
 	if ((CL.kbuttons[CL.kbutton.speed].state & 1) !== 0)
 	{
@@ -984,6 +1009,7 @@ CL.Init = function()
 	CL.nolerp = Cvar.RegisterVariable('cl_nolerp', '0');
 	CL.lookspring = Cvar.RegisterVariable('lookspring', '0', true);
 	CL.lookstrafe = Cvar.RegisterVariable('lookstrafe', '0', true);
+	CL.joyswap = Cvar.RegisterVariable('joyswap', '0', false);
 	CL.sensitivity = Cvar.RegisterVariable('sensitivity', '3', true);
 	CL.m_pitch = Cvar.RegisterVariable('m_pitch', '0.022', true);
 	CL.m_yaw = Cvar.RegisterVariable('m_yaw', '0.022', true);
