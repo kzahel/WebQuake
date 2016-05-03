@@ -10,7 +10,33 @@ S.listener_right = [0.0, 0.0, 0.0];
 S.listener_up = [0.0, 0.0, 0.0];
 
 S.known_sfx = [];
+S.setupCloneNode = function(sfx) {
+    //console.log('setup clone',sfx.name,sfx)
+    var node = sfx.cache.data
+    var aud = node.cloneNode();
+    //var state = {removed:false}
+    if (false) { // was triggering too much, and not working ? dont understand media events.
+        aud.onended = /*aud.onerror = aud.onabort = */function(aud,evt) {
+            //console.log('aud ended',evt.type,sfx.name,evt.eventPhase)
+            if (state[evt.type]) { debugger }
+            state[evt.type]=true
+            aud.src = '' // dont do this for static / ambient ?
+            if (! state.removed) {
+                state.removed = true
+                aud.parentNode.removeChild(aud)
+            }
+        }.bind(window, aud)
+    }
 
+    // i hate timeouts, but this seems to work
+    setTimeout( function() {
+        aud.src = ''
+        aud.parentNode.removeChild(aud)
+    }, sfx.cache.length * 1000)
+    
+    S.audioholder.appendChild(aud)
+    return aud
+}
 S.Init = function()
 {
     S.audioholder = document.getElementById('audioholder')
@@ -62,15 +88,7 @@ S.Init = function()
 			nodes.gain.connect(S.context.destination);
 		}
 	    else {
-		var aud = ch.sfx.cache.data.cloneNode();
-                aud.onended = aud.onerror = aud.onabort = function() {
-                    aud.src = ''
-                    if (aud.parentNode) {
-                        aud.parentNode.removeChild(aud)
-                    }
-                }
-                S.audioholder.appendChild(aud)
-                ch.audio = aud
+                ch.audio = S.setupCloneNode(ch.sfx, false)
             }
 	}
 
@@ -281,7 +299,7 @@ S.StartSound = function(entnum, entchannel, sfx, origin, vol, attenuation)
 	}
 	else
 	{
-		target_chan.audio = sfx.cache.data.cloneNode();
+	    target_chan.audio = S.setupCloneNode(sfx)
 		volume = (target_chan.leftvol + target_chan.rightvol) * 0.5;
 		if (volume > 1.0)
 			volume = 1.0;
@@ -406,7 +424,7 @@ S.StaticSound = function(sfx, origin, vol, attenuation)
 	}
 	else
 	{
-		ss.audio = sfx.cache.data.cloneNode();
+	    ss.audio = S.setupCloneNode(sfx, false)
 		ss.audio.pause();
 	}
 };
@@ -514,7 +532,9 @@ S.UpdateAmbientSounds = function()
 			if (ch.audio.paused === true)
 			{
 			    //ch.audio.play();
-                            ch.sfx.cache.data.play() // ?need to clone
+                            ch.audio = S.setupCloneNode(ch.sfx)
+                            ch.audio.play()
+                            //ch.sfx.cache.data.play() // ?need to clone
 				ch.end = Host.realtime + sc.length;
 				continue;
 			}
@@ -655,7 +675,9 @@ S.UpdateStaticSounds = function()
 			sc = ch.sfx.cache;
 			if (ch.audio.paused === true)
 			{
-				ch.audio.play();
+			    //ch.audio.play();
+                            ch.audio = S.setupCloneNode(ch.sfx)
+                            ch.audio.play()
 				ch.end = Host.realtime + sc.length;
 				continue;
 			}
