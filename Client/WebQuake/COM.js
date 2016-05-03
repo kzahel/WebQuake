@@ -1,7 +1,6 @@
 COM = {};
 
 COM.argv = [];
-
 COM.standard_quake = true;
 
 COM.DefaultExtension = function(path, extension)

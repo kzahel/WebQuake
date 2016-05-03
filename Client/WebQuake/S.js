@@ -13,6 +13,8 @@ S.known_sfx = [];
 
 S.Init = function()
 {
+    S.audioholder = document.getElementById('audioholder')
+
 	Con.Print('\nSound Initialization\n');
 	Cmd.AddCommand('play', S.Play);
 	Cmd.AddCommand('playvol', S.PlayVol);
@@ -59,8 +61,17 @@ S.Init = function()
 			nodes.source.connect(nodes.gain);
 			nodes.gain.connect(S.context.destination);
 		}
-		else
-			ch.audio = ch.sfx.cache.data.cloneNode();
+	    else {
+		var aud = ch.sfx.cache.data.cloneNode();
+                aud.onended = aud.onerror = aud.onabort = function() {
+                    aud.src = ''
+                    if (aud.parentNode) {
+                        aud.parentNode.removeChild(aud)
+                    }
+                }
+                S.audioholder.appendChild(aud)
+                ch.audio = aud
+            }
 	}
 
 	Con.sfx_talk = S.PrecacheSound('misc/talk.wav');
@@ -502,7 +513,8 @@ S.UpdateAmbientSounds = function()
 			sc = ch.sfx.cache;
 			if (ch.audio.paused === true)
 			{
-				ch.audio.play();
+			    //ch.audio.play();
+                            ch.sfx.cache.data.play() // ?need to clone
 				ch.end = Host.realtime + sc.length;
 				continue;
 			}
@@ -815,10 +827,12 @@ S.LoadSound = function(s)
 	view.setUint32(36, 0x61746164, true); // data
 	view.setUint32(40, datalen, true);
 	(new Uint8Array(out, 44, datalen)).set(new Uint8Array(data, dataofs, datalen));
-	if (S.context != null)
-		sc.data = S.context.createBuffer(out, true);
-	else
-		sc.data = new Audio('data:audio/wav;base64,' + Q.btoa(new Uint8Array(out)));
+    if (S.context != null) {
+	sc.data = S.context.createBuffer(out, true);
+    }
+    else {
+	sc.data = new Audio('data:audio/wav;base64,' + Q.btoa(new Uint8Array(out)));
+    }
 
 	s.cache = sc;
 	return true;

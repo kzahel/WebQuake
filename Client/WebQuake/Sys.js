@@ -1,5 +1,31 @@
 Sys = {};
 
+Sys.ongamepadpoll = function(e) { // on joystick event
+    // gamepad events are not edge triggered
+
+    Key.gamepadlastaxes = e.axes;
+    if (Key.gamepadlastbuttons) {
+
+	for (var i=0; i<e.buttons.length; i++) {
+	    if (e.buttons[i].value != Key.gamepadlastbuttons[i]) {
+		if (e.buttons[i].value) {
+		    Key.Event(Key.k['joy'+(i+1)], true)
+		    //console.log("JOY"+(i+1), true)
+		} else {
+		    Key.Event(Key.k['joy'+(i+1)])
+		    //console.log("JOY"+(i+1), false)
+		}
+	    }
+	}
+	Key.gamepadlastbuttons = e.buttons.map( function(b) { return b.value } )
+
+    } else {
+	// first time gamepad was registered
+	// likely no buttons were pressed. move on
+	Key.gamepadlastbuttons = e.buttons.map( function(b) { return b.value } )
+    }
+}
+
 Sys.events = ['onbeforeunload', 'oncontextmenu', 'onfocus', 'onkeydown', 'onkeyup', 'onmousedown', 'onmouseup', 'onmousewheel', 'onunload', 'onwheel'];
 
 Sys.Quit = function()

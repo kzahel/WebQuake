@@ -539,7 +539,7 @@ M.MultiPlayer_Key = function(k)
 
 // Options menu
 M.options_cursor = 0;
-M.options_items = 13;
+M.options_items = 14;
 
 M.Menu_Options_f = function()
 {
@@ -613,6 +613,9 @@ M.AdjustSliders = function(dir)
 	case 11: // lookstrafe
 		Cvar.SetValue('lookstrafe', (CL.lookstrafe.value !== 0) ? 0 : 1);
 		return;
+	case 13: // swap gamepad joysticks
+		Cvar.SetValue('joyswap', (CL.joyswap.value !== 0) ? 0 : 1);
+		return;
 	case 12: // fullscreen
             if (V.vid_fullscreen.value !== 0 || ! document.fullscreenElement) {
                 VID.mainwindow.webkitRequestFullScreen()
@@ -679,6 +682,8 @@ M.Options_Draw = function()
 	M.Print(220, 120, (CL.lookstrafe.value !== 0) ? 'on' : 'off');
 	M.Print(112, 128, 'Fullscreen');
 	M.Print(220, 128, (V.vid_fullscreen.value !== 0) ? 'on' : 'off');
+	M.Print(96, 136, 'Gamepad Swap');
+	M.Print(220, 136, (CL.joyswap.value !== 0) ? 'on' : 'off');
 	
 	M.DrawCharacter(200, 32 + (M.options_cursor << 3), 12 + ((Host.realtime * 4.0) & 1));
 };

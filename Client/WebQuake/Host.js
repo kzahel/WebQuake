@@ -183,7 +183,13 @@ Host.ServerFrame = function()
 Host.time3 = 0.0;
 Host._Frame = function()
 {
-	Math.random();
+    Math.random();
+        Host._gamepad = (navigator.getGamepads && navigator.getGamepads()[0]);
+
+    if (Host._gamepad) {
+        Sys.ongamepadpoll(Host._gamepad);
+    }
+
 
 	Host.realtime = Sys.FloatTime();
 	Host.frametime = Host.realtime - Host.oldrealtime;
