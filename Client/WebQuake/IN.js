@@ -6,7 +6,7 @@ IN.old_mouse_x = 0.0;
 IN.old_mouse_y = 0.0;
 IN.StartupMouse = function()
 {
-        IN.m_filter = Cvar.RegisterVariable('m_filter', '1');
+	IN.m_filter = Cvar.RegisterVariable('m_filter', '1');
 	if (COM.CheckParm('-nomouse') != null)
 		return;
 	if (VID.mainwindow.pointerLockElement != null || VID.mainwindow.requestPointerLock)

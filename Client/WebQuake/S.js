@@ -10,32 +10,30 @@ S.listener_right = [0.0, 0.0, 0.0];
 S.listener_up = [0.0, 0.0, 0.0];
 
 S.known_sfx = [];
-S.setupCloneNode = function(sfx) {
-    //console.log('setup clone',sfx.name,sfx)
-    var node = sfx.cache.data
-    var aud = node.cloneNode();
-    //var state = {removed:false}
-    if (false) { // was triggering too much, and not working ? dont understand media events.
-        aud.onended = /*aud.onerror = aud.onabort = */function(aud,evt) {
-            //console.log('aud ended',evt.type,sfx.name,evt.eventPhase)
-            if (state[evt.type]) { debugger }
-            state[evt.type]=true
-            aud.src = '' // dont do this for static / ambient ?
-            if (! state.removed) {
-                state.removed = true
-                aud.parentNode.removeChild(aud)
-            }
-        }.bind(window, aud)
-    }
+S.known_sfx_d = {};
+S.cache = {}
+S.setupCloneNode = function(sfx, permanentNode) {
+	permanentNode = true
+	console.log('setup clone',sfx.name,sfx)
+	var node = sfx.cache.data
+	var aud = node.cloneNode();
+	if (S.cache[sfx.name]) {
+		S.cache[sfx.name].push()
+	}
+	aud.setAttribute('data-name',sfx.name)
+	// i hate timeouts, but this seems to work
+	if (! permanentNode) {
+		var t = sfx.cache.length
+		console.log('remove',sfx.name,'in',t)
+		setTimeout( function() {
+			aud.src = ''
+			aud.parentNode.removeChild(aud)
+		},  t * 1000 + 30)
+	}
 
-    // i hate timeouts, but this seems to work
-    setTimeout( function() {
-        aud.src = ''
-        aud.parentNode.removeChild(aud)
-    }, sfx.cache.length * 1000)
-    
-    S.audioholder.appendChild(aud)
-    return aud
+	
+	S.audioholder.appendChild(aud)
+	return aud
 }
 S.Init = function()
 {
@@ -56,10 +54,10 @@ S.Init = function()
 	S.started = true;
 
 	// createBuffer is broken, disable Web Audio for now.
-	/* if (window.AudioContext != null))
+	if (window.AudioContext != null)
 		S.context = new AudioContext();
 	else if (window.webkitAudioContext != null)
-		S.context = new webkitAudioContext(); */
+		S.context = new webkitAudioContext();
 
 	var i, ambient_sfx = ['water1', 'wind2'], ch, nodes;
 	for (i = 0; i < ambient_sfx.length; ++i)
@@ -77,7 +75,7 @@ S.Init = function()
 		{
 			nodes = {
 				source: S.context.createBufferSource(),
-				gain: S.context.createGainNode()
+				gain: S.context.createGain()
 			};
 			ch.nodes = nodes;
 			nodes.source.buffer = ch.sfx.cache.data;
@@ -126,8 +124,10 @@ S.PrecacheSound = function(name)
 	}
 	if (i === S.known_sfx.length)
 	{
-		S.known_sfx[i] = {name: name};
-		sfx = S.known_sfx[i];
+        sfx = {name: name};
+		S.known_sfx[i] = sfx
+        if (! S.known_sfx_d[name]) S.known_sfx_d[name] = []
+		S.known_sfx_d[name].push( sfx );
 	}
 	if (S.precache.value !== 0)
 		S.LoadSound(sfx);
@@ -248,8 +248,8 @@ S.StartSound = function(entnum, entchannel, sfx, origin, vol, attenuation)
 			source: S.context.createBufferSource(),
 			merger1: S.context.createChannelMerger(2),
 			splitter: S.context.createChannelSplitter(2),
-			gain0: S.context.createGainNode(),
-			gain1: S.context.createGainNode(),
+			gain0: S.context.createGain(),
+			gain1: S.context.createGain(),
 			merger2: S.context.createChannelMerger(2)
 		};
 		target_chan.nodes = nodes;
@@ -404,8 +404,8 @@ S.StaticSound = function(sfx, origin, vol, attenuation)
 			source: S.context.createBufferSource(),
 			merger1: S.context.createChannelMerger(2),
 			splitter: S.context.createChannelSplitter(2),
-			gain0: S.context.createGainNode(),
-			gain1: S.context.createGainNode(),
+			gain0: S.context.createGain(),
+			gain1: S.context.createGain(),
 			merger2: S.context.createChannelMerger(2)
 		};
 		ss.nodes = nodes;
@@ -532,7 +532,7 @@ S.UpdateAmbientSounds = function()
 			if (ch.audio.paused === true)
 			{
 			    //ch.audio.play();
-                            ch.audio = S.setupCloneNode(ch.sfx)
+                            ch.audio = S.setupCloneNode(ch.sfx,true)
                             ch.audio.play()
                             //ch.sfx.cache.data.play() // ?need to clone
 				ch.end = Host.realtime + sc.length;
@@ -751,7 +751,7 @@ S.PlayVol = function()
 	}
 };
 
-S.LoadSound = function(s)
+S.LoadSound = function(s,cb)
 {
 	if (S.nosound.value !== 0)
 		return;
@@ -849,12 +849,17 @@ S.LoadSound = function(s)
 	view.setUint32(36, 0x61746164, true); // data
 	view.setUint32(40, datalen, true);
 	(new Uint8Array(out, 44, datalen)).set(new Uint8Array(data, dataofs, datalen));
-    if (S.context != null) {
-	sc.data = S.context.createBuffer(out, true);
-    }
-    else {
-	sc.data = new Audio('data:audio/wav;base64,' + Q.btoa(new Uint8Array(out)));
-    }
+	if (S.context != null) {
+		//sc.data = S.context.createBuffer(out, true);
+		sc.data = S.context.decodeAudioData(out, function(buf) {
+			sc.data = buf
+		}, function(err) {
+		})
+	}
+	else {
+		console.log('creating audio data: elt')
+		sc.data = new Audio('data:audio/wav;base64,' + Q.btoa(new Uint8Array(out)));
+	}
 
 	s.cache = sc;
 	return true;
